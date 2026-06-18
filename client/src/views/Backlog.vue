@@ -124,7 +124,7 @@ export default {
         allBacklogItems.value = backlogData
         inventoryItems.value = inventoryData
       } catch (err) {
-        error.value = 'Failed to load backlog: ' + err.message
+        error.value = 'Something went wrong. Please refresh and try again.'
       } finally {
         loading.value = false
       }

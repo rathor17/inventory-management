@@ -4,6 +4,8 @@
       class="profile-button"
       @click="toggleDropdown"
       @blur="handleBlur"
+      :aria-expanded="isDropdownOpen"
+      aria-haspopup="menu"
     >
       <div class="avatar">
         {{ getInitials(currentUser.name) }}
@@ -74,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuth } from '../composables/useAuth'
 import { useI18n } from '../composables/useI18n'
 
@@ -113,6 +115,43 @@ const handleLogout = () => {
   isDropdownOpen.value = false
   logout()
 }
+
+function handleKeydown(e) {
+  if (!isDropdownOpen.value) return
+
+  if (e.key === 'Escape') {
+    isDropdownOpen.value = false
+    return
+  }
+
+  // Focus trap: keep focus inside dropdown when open
+  if (e.key === 'Tab') {
+    const menu = document.querySelector('.dropdown-menu')
+    if (!menu) return
+    const focusable = Array.from(menu.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])'))
+    if (focusable.length === 0) return
+
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    if (e.shiftKey) {
+      // Shift+Tab: if on first item, wrap to last
+      if (document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      }
+    } else {
+      // Tab: if on last item, wrap to first
+      if (document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+  }
+}
+
+onMounted(() => document.addEventListener('keydown', handleKeydown))
+onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
 </script>
 
 <style scoped>

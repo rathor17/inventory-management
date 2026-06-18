@@ -1,5 +1,6 @@
 <template>
   <div class="app" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+    <div aria-live="polite" aria-atomic="true" class="sr-only" id="status-announcer"></div>
     <aside class="sidebar">
       <!-- Logo -->
       <div class="sidebar-logo">
@@ -12,53 +13,60 @@
 
       <!-- Nav links -->
       <nav class="sidebar-nav">
-        <router-link to="/" class="sidebar-link" :class="{ active: $route.path === '/' }" :title="t('nav.overview')">
+        <router-link to="/" class="sidebar-link" :class="{ active: $route.path === '/' }" :title="t('nav.overview')" :aria-current="$route.path === '/' ? 'page' : undefined">
           <span class="nav-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
           </span>
           <span class="nav-label" v-show="!sidebarCollapsed">{{ t('nav.overview') }}</span>
+          <span v-if="sidebarCollapsed" class="sr-only">{{ t('nav.overview') }}</span>
         </router-link>
 
-        <router-link to="/inventory" class="sidebar-link" :class="{ active: $route.path === '/inventory' }" :title="t('nav.inventory')">
+        <router-link to="/inventory" class="sidebar-link" :class="{ active: $route.path === '/inventory' }" :title="t('nav.inventory')" :aria-current="$route.path === '/inventory' ? 'page' : undefined">
           <span class="nav-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
           </span>
           <span class="nav-label" v-show="!sidebarCollapsed">{{ t('nav.inventory') }}</span>
+          <span v-if="sidebarCollapsed" class="sr-only">{{ t('nav.inventory') }}</span>
         </router-link>
 
-        <router-link to="/orders" class="sidebar-link" :class="{ active: $route.path === '/orders' }" :title="t('nav.orders')">
+        <router-link to="/orders" class="sidebar-link" :class="{ active: $route.path === '/orders' }" :title="t('nav.orders')" :aria-current="$route.path === '/orders' ? 'page' : undefined">
           <span class="nav-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           </span>
           <span class="nav-label" v-show="!sidebarCollapsed">{{ t('nav.orders') }}</span>
+          <span v-if="sidebarCollapsed" class="sr-only">{{ t('nav.orders') }}</span>
         </router-link>
 
-        <router-link to="/spending" class="sidebar-link" :class="{ active: $route.path === '/spending' }" :title="t('nav.finance')">
+        <router-link to="/spending" class="sidebar-link" :class="{ active: $route.path === '/spending' }" :title="t('nav.finance')" :aria-current="$route.path === '/spending' ? 'page' : undefined">
           <span class="nav-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </span>
           <span class="nav-label" v-show="!sidebarCollapsed">{{ t('nav.finance') }}</span>
+          <span v-if="sidebarCollapsed" class="sr-only">{{ t('nav.finance') }}</span>
         </router-link>
 
-        <router-link to="/demand" class="sidebar-link" :class="{ active: $route.path === '/demand' }" :title="t('nav.demandForecast')">
+        <router-link to="/demand" class="sidebar-link" :class="{ active: $route.path === '/demand' }" :title="t('nav.demandForecast')" :aria-current="$route.path === '/demand' ? 'page' : undefined">
           <span class="nav-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
           </span>
           <span class="nav-label" v-show="!sidebarCollapsed">{{ t('nav.demandForecast') }}</span>
+          <span v-if="sidebarCollapsed" class="sr-only">{{ t('nav.demandForecast') }}</span>
         </router-link>
 
-        <router-link to="/reports" class="sidebar-link" :class="{ active: $route.path === '/reports' }" title="Reports">
+        <router-link to="/reports" class="sidebar-link" :class="{ active: $route.path === '/reports' }" title="Reports" :aria-current="$route.path === '/reports' ? 'page' : undefined">
           <span class="nav-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           </span>
           <span class="nav-label" v-show="!sidebarCollapsed">Reports</span>
+          <span v-if="sidebarCollapsed" class="sr-only">Reports</span>
         </router-link>
 
-        <router-link to="/restocking" class="sidebar-link" :class="{ active: $route.path === '/restocking' }" :title="t('nav.restocking')">
+        <router-link to="/restocking" class="sidebar-link" :class="{ active: $route.path === '/restocking' }" :title="t('nav.restocking')" :aria-current="$route.path === '/restocking' ? 'page' : undefined">
           <span class="nav-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.66"/></svg>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.66"/></svg>
           </span>
           <span class="nav-label" v-show="!sidebarCollapsed">{{ t('nav.restocking') }}</span>
+          <span v-if="sidebarCollapsed" class="sr-only">{{ t('nav.restocking') }}</span>
         </router-link>
       </nav>
 
@@ -604,6 +612,43 @@ tbody tr:hover {
 .badge.low {
   background: #dbeafe;
   color: #1e40af;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 60px;
+  }
+
+  .nav-label,
+  .logo-text {
+    display: none;
+  }
+
+  .sidebar-link {
+    justify-content: center;
+    padding: 0.625rem;
+  }
+
+  .sidebar-logo {
+    justify-content: center;
+    padding: 1.25rem 0;
+  }
+
+  .sidebar-bottom {
+    align-items: center;
+  }
 }
 
 .loading {
