@@ -75,6 +75,51 @@
         </div>
       </div>
     </div>
+
+    <div class="submitted-orders-section">
+      <h2>Submitted Orders</h2>
+      <p class="section-description">Restocking orders placed via the Restocking tab</p>
+
+      <!-- Empty state -->
+      <div v-if="restockingOrders.length === 0" class="empty-state">
+        No restocking orders submitted yet.
+      </div>
+
+      <!-- Table -->
+      <table v-else class="orders-table">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Items</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th>Expected Delivery</th>
+            <th>Lead Time</th>
+            <th>Total Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="order in restockingOrders" :key="order.id">
+            <td><strong>{{ order.order_number }}</strong></td>
+            <td>
+              <details class="items-details">
+                <summary class="items-summary">{{ order.items.length }} items</summary>
+                <div class="items-dropdown">
+                  <div v-for="item in order.items" :key="item.sku" class="item-row">
+                    {{ item.name }} — Qty: {{ item.quantity }} @ {{ formatCurrency(item.unit_cost) }}
+                  </div>
+                </div>
+              </details>
+            </td>
+            <td><span class="status-badge status-submitted">{{ order.status }}</span></td>
+            <td>{{ formatDate(order.submitted_date) }}</td>
+            <td>{{ formatDate(order.expected_delivery) }}</td>
+            <td>{{ order.lead_time_days }} days</td>
+            <td><strong>{{ formatCurrency(order.total_cost) }}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -95,6 +140,7 @@ export default {
     const loading = ref(true)
     const error = ref(null)
     const orders = ref([])
+    const restockingOrders = ref([])
 
     // Use shared filters
     const {
@@ -153,16 +199,29 @@ export default {
       })
     }
 
-    onMounted(loadOrders)
+    const formatCurrency = (value) => {
+      return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+    }
+
+    onMounted(async () => {
+      loadOrders()
+      try {
+        restockingOrders.value = await api.getRestockingOrders()
+      } catch (err) {
+        console.error('Failed to load restocking orders:', err)
+      }
+    })
 
     return {
       t,
       loading,
       error,
       orders,
+      restockingOrders,
       getOrdersByStatus,
       getOrderStatusClass,
       formatDate,
+      formatCurrency,
       currencySymbol,
       translateProductName,
       translateCustomerName
@@ -275,5 +334,43 @@ export default {
 .item-meta {
   font-size: 0.813rem;
   color: #64748b;
+}
+
+.submitted-orders-section {
+  margin-top: 2rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.submitted-orders-section h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.25rem 0;
+}
+
+.section-description {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0 0 1.25rem 0;
+}
+
+.status-submitted {
+  background: #f3e8ff;
+  color: #6b21a8;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.empty-state {
+  color: #64748b;
+  font-size: 0.875rem;
+  padding: 1.5rem 0;
+  text-align: center;
 }
 </style>
