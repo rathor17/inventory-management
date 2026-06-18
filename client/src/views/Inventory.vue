@@ -20,6 +20,7 @@
               type="text"
               :placeholder="t('inventory.searchPlaceholder')"
               class="search-input"
+              aria-label="Search inventory items"
             />
             <button
               v-if="searchQuery"
@@ -159,7 +160,7 @@ export default {
           category: filters.category
         })
       } catch (err) {
-        error.value = 'Failed to load inventory: ' + err.message
+        error.value = 'Something went wrong. Please refresh and try again.'
       } finally {
         loading.value = false
       }

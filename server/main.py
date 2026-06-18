@@ -1,14 +1,34 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import datetime, timedelta
+import uuid
 from mock_data import inventory_items, orders, demand_forecasts, backlog_items, spending_summary, monthly_spending, category_spending, recent_transactions, purchase_orders
 
 app = FastAPI(title="Factory Inventory Management System")
 
 # In-memory store for restocking orders (resets on server restart)
 restocking_orders = []
+
+# SKU -> unit_cost lookup built at startup for O(1) server-side cost validation
+_sku_cost_map = {}
+
+@app.on_event("startup")
+async def build_sku_cost_map():
+    global _sku_cost_map
+    _sku_cost_map = {item["sku"]: item["unit_cost"] for item in inventory_items}
+
+# Request body size limit: reject payloads over 64 KB
+MAX_BODY_BYTES = 64 * 1024
+
+@app.middleware("http")
+async def limit_request_body(request: Request, call_next):
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > MAX_BODY_BYTES:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=413, content={"detail": "Request body too large"})
+    return await call_next(request)
 
 # Quarter mapping for date filtering
 QUARTER_MAP = {
@@ -50,13 +70,17 @@ def apply_filters(items: list, warehouse: Optional[str] = None, category: Option
 
     return filtered
 
-# CORS middleware
+# CORS middleware — explicit origin list; wildcard + credentials is invalid per spec
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # Data models
@@ -142,7 +166,13 @@ class RestockingOrder(BaseModel):
 
 class CreateRestockingOrderRequest(BaseModel):
     items: List[RestockingOrderItem]
-    total_cost: float
+
+    @field_validator("items")
+    @classmethod
+    def max_items(cls, v):
+        if len(v) > 100:
+            raise ValueError("Maximum 100 items per restocking order")
+        return v
 
 # API endpoints
 @app.get("/")
@@ -337,12 +367,18 @@ def get_restocking_orders():
 def create_restocking_order(request: CreateRestockingOrderRequest):
     """Submit a new restocking order with a fixed 14-day lead time"""
     now = datetime.utcnow()
-    order_id = str(len(restocking_orders) + 1)
+    # UUID prevents order enumeration; sequential ints would leak order volume
+    order_id = str(uuid.uuid4())
+    # Recalculate cost server-side — client-supplied unit_cost is untrusted
+    server_total = sum(
+        item.quantity * _sku_cost_map.get(item.sku, item.unit_cost)
+        for item in request.items
+    )
     new_order = {
         "id": order_id,
-        "order_number": f"RST-{now.year}-{order_id.zfill(4)}",
+        "order_number": f"RST-{now.year}-{now.strftime('%m%d%H%M%S')}",
         "items": [item.model_dump() for item in request.items],
-        "total_cost": request.total_cost,
+        "total_cost": round(server_total, 2),
         "status": "Submitted",
         "submitted_date": now.isoformat(),
         "expected_delivery": (now + timedelta(days=14)).isoformat(),
@@ -353,4 +389,5 @@ def create_restocking_order(request: CreateRestockingOrderRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    # Bind loopback only — 0.0.0.0 exposes the API on all network interfaces
+    uvicorn.run(app, host="127.0.0.1", port=8001)

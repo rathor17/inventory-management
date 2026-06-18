@@ -297,7 +297,7 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { api } from '../api'
 import { useFilters } from '../composables/useFilters'
 import { useI18n } from '../composables/useI18n'
@@ -570,12 +570,15 @@ export default {
           api.getBacklog()
         ])
 
+        // Any result may be null if the request was aborted by a newer call — skip state updates in that case
+        if (summaryData === null || ordersData === null || inventoryData === null || backlogData === null) return
+
         summary.value = summaryData
         allOrders.value = ordersData
         inventoryItems.value = inventoryData
         allBacklogItems.value = backlogData
       } catch (err) {
-        error.value = 'Failed to load dashboard data: ' + err.message
+        error.value = 'Something went wrong. Please refresh and try again.'
       } finally {
         loading.value = false
       }
@@ -672,12 +675,13 @@ export default {
       showPOModal.value = false
     }
 
-    // Watch for filter changes and reload data
+    // Debounced watcher: rapid filter changes are coalesced into a single load.
+    // immediate:true replaces the onMounted(loadData) call to avoid double-loading.
+    let debounceTimer = null
     watch([selectedPeriod, selectedLocation, selectedCategory, selectedStatus], () => {
-      loadData()
-    })
-
-    onMounted(loadData)
+      clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(loadData, 300)
+    }, { immediate: true })
 
     return {
       t,

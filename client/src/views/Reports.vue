@@ -170,7 +170,7 @@ export default {
 
       } catch (err) {
         console.log('Error loading reports:', err)
-        this.error = 'Failed to load reports: ' + err.message
+        this.error = 'Something went wrong. Please refresh and try again.'
       } finally {
         this.loading = false
         console.log('Loading complete')

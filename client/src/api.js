@@ -2,19 +2,51 @@ import axios from 'axios'
 
 const API_BASE_URL = 'http://localhost:8001/api'
 
+// Map of endpoint URL (with query params) → AbortController
+// If the same URL is requested again before the previous call completes,
+// the in-flight request is aborted to prevent stale data races.
+const pendingControllers = new Map()
+
+function makeRequest(url, options = {}) {
+  // Abort any in-flight request for this exact URL
+  if (pendingControllers.has(url)) {
+    pendingControllers.get(url).abort()
+  }
+
+  const controller = new AbortController()
+  pendingControllers.set(url, controller)
+
+  return axios.get(url, { ...options, signal: controller.signal })
+    .then(response => {
+      // Clean up the controller entry once the request succeeds
+      pendingControllers.delete(url)
+      return response
+    })
+    .catch(err => {
+      if (axios.isCancel(err) || err.name === 'AbortError' || err.name === 'CanceledError') {
+        // Aborted request — return null so callers can skip state updates
+        return null
+      }
+      pendingControllers.delete(url)
+      throw err
+    })
+}
+
 export const api = {
   async getInventory(filters = {}) {
     const params = new URLSearchParams()
     if (filters.warehouse && filters.warehouse !== 'all') params.append('warehouse', filters.warehouse)
     if (filters.category && filters.category !== 'all') params.append('category', filters.category)
 
-    const response = await axios.get(`${API_BASE_URL}/inventory?${params.toString()}`)
-    return response.data
+    const url = `${API_BASE_URL}/inventory?${params.toString()}`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getInventoryItem(id) {
-    const response = await axios.get(`${API_BASE_URL}/inventory/${id}`)
-    return response.data
+    const url = `${API_BASE_URL}/inventory/${id}`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getOrders(filters = {}) {
@@ -24,23 +56,27 @@ export const api = {
     if (filters.status && filters.status !== 'all') params.append('status', filters.status)
     if (filters.month && filters.month !== 'all') params.append('month', filters.month)
 
-    const response = await axios.get(`${API_BASE_URL}/orders?${params.toString()}`)
-    return response.data
+    const url = `${API_BASE_URL}/orders?${params.toString()}`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getOrder(id) {
-    const response = await axios.get(`${API_BASE_URL}/orders/${id}`)
-    return response.data
+    const url = `${API_BASE_URL}/orders/${id}`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getDemandForecasts() {
-    const response = await axios.get(`${API_BASE_URL}/demand`)
-    return response.data
+    const url = `${API_BASE_URL}/demand`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getBacklog() {
-    const response = await axios.get(`${API_BASE_URL}/backlog`)
-    return response.data
+    const url = `${API_BASE_URL}/backlog`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getDashboardSummary(filters = {}) {
@@ -50,33 +86,39 @@ export const api = {
     if (filters.status && filters.status !== 'all') params.append('status', filters.status)
     if (filters.month && filters.month !== 'all') params.append('month', filters.month)
 
-    const response = await axios.get(`${API_BASE_URL}/dashboard/summary?${params.toString()}`)
-    return response.data
+    const url = `${API_BASE_URL}/dashboard/summary?${params.toString()}`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getSpendingSummary() {
-    const response = await axios.get(`${API_BASE_URL}/spending/summary`)
-    return response.data
+    const url = `${API_BASE_URL}/spending/summary`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getMonthlySpending() {
-    const response = await axios.get(`${API_BASE_URL}/spending/monthly`)
-    return response.data
+    const url = `${API_BASE_URL}/spending/monthly`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getCategorySpending() {
-    const response = await axios.get(`${API_BASE_URL}/spending/categories`)
-    return response.data
+    const url = `${API_BASE_URL}/spending/categories`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getTransactions() {
-    const response = await axios.get(`${API_BASE_URL}/spending/transactions`)
-    return response.data
+    const url = `${API_BASE_URL}/spending/transactions`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getTasks() {
-    const response = await axios.get(`${API_BASE_URL}/tasks`)
-    return response.data
+    const url = `${API_BASE_URL}/tasks`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async createTask(taskData) {
@@ -100,13 +142,15 @@ export const api = {
   },
 
   async getPurchaseOrderByBacklogItem(backlogItemId) {
-    const response = await axios.get(`${API_BASE_URL}/purchase-orders/${backlogItemId}`)
-    return response.data
+    const url = `${API_BASE_URL}/purchase-orders/${backlogItemId}`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async getRestockingOrders() {
-    const response = await axios.get(`${API_BASE_URL}/restocking-orders`)
-    return response.data
+    const url = `${API_BASE_URL}/restocking-orders`
+    const response = await makeRequest(url)
+    return response ? response.data : null
   },
 
   async createRestockingOrder(data) {

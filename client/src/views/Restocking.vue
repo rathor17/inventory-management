@@ -206,7 +206,7 @@ export default {
         allForecasts.value = forecastsData
         inventoryItems.value = inventoryData
       } catch (err) {
-        error.value = 'Failed to load restocking data: ' + err.message
+        error.value = 'Something went wrong. Please refresh and try again.'
         console.error(err)
       } finally {
         loading.value = false
@@ -234,7 +234,7 @@ export default {
         const response = await api.createRestockingOrder(payload)
         submittedOrder.value = response
       } catch (err) {
-        submitError.value = 'Failed to submit order: ' + (err.response?.data?.detail || err.message)
+        submitError.value = 'Something went wrong. Please refresh and try again.'
         console.error(err)
       } finally {
         submitting.value = false
