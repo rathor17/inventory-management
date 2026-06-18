@@ -147,6 +147,18 @@ export const api = {
     return response ? response.data : null
   },
 
+  async getQuarterlyReports() {
+    const url = `${API_BASE_URL}/reports/quarterly`
+    const response = await makeRequest(url)
+    return response ? response.data : null
+  },
+
+  async getMonthlyTrends() {
+    const url = `${API_BASE_URL}/reports/monthly-trends`
+    const response = await makeRequest(url)
+    return response ? response.data : null
+  },
+
   async getRestockingOrders() {
     const url = `${API_BASE_URL}/restocking-orders`
     const response = await makeRequest(url)
